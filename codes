@@ -1,0 +1,183 @@
+// Initialize Next.js project with Tailwind CSS
+
+// 1. Setting up the folder structure and basic layout
+
+// Install dependencies: `npx create-next-app@latest moodify`
+// Inside the project folder: `npm install tailwindcss postcss autoprefixer react-beautiful-dnd react-color`
+// Setup Tailwind: `npx tailwindcss init`
+
+// tailwind.config.js
+module.exports = {
+  content: ["./pages/**/*.{js,ts,jsx,tsx}", "./components/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        primary: '#FF9AA2', // Soft pink
+        secondary: '#FFDAC1', // Pastel peach
+        accent: '#B5EAD7',   // Mint green
+        neutral: '#C7CEEA',  // Lavender
+      },
+      fontFamily: {
+        sans: ['Poppins', 'sans-serif'],
+        serif: ['Lora', 'serif'],
+      },
+    },
+  },
+  plugins: [],
+};
+
+// 2. Creating a basic layout for pages
+
+// pages/_app.js
+import '../styles/globals.css';
+
+function MyApp({ Component, pageProps }) {
+  return (
+    <div className="min-h-screen bg-neutral font-sans">
+      <Component {...pageProps} />
+    </div>
+  );
+}
+
+export default MyApp;
+
+// 3. Sample Home Page
+
+// pages/index.js
+import Head from 'next/head';
+import Link from 'next/link';
+
+export default function Home() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20">
+      <Head>
+        <title>Moodify</title>
+        <meta name="description" content="Transform your mood into visual inspiration with Moodify!" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      
+      <main className="text-center">
+        <h1 className="text-5xl font-bold text-primary mb-4">Welcome to Moodify</h1>
+        <p className="text-xl text-secondary mb-6">Your AI-powered moodboard generator</p>
+        <Link href="/moodboard-creator">
+          <button className="px-6 py-3 bg-accent text-white rounded-lg hover:bg-secondary transition">
+            Get Started
+          </button>
+        </Link>
+      </main>
+    </div>
+  );
+}
+
+// 4. Moodboard Creator Page
+
+// pages/moodboard-creator.js
+import React, { useState } from 'react';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { SketchPicker } from 'react-color';
+
+export default function MoodboardCreator() {
+  const [items, setItems] = useState([
+    { id: '1', content: 'Drag me!' },
+    { id: '2', content: 'Drop me!' },
+    { id: '3', content: 'Style me!' },
+  ]);
+  const [color, setColor] = useState('#B5EAD7');
+  const [keywords, setKeywords] = useState('');
+  const [uploadedImage, setUploadedImage] = useState(null);
+
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+    const reorderedItems = Array.from(items);
+    const [removed] = reorderedItems.splice(result.source.index, 1);
+    reorderedItems.splice(result.destination.index, 0, removed);
+    setItems(reorderedItems);
+  };
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setUploadedImage(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-neutral px-4 py-10">
+      <h1 className="text-3xl font-bold text-primary mb-6 text-center">Moodboard Creator</h1>
+
+      {/* Input Panel */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-bold mb-4 text-secondary">Customize Your Moodboard</h2>
+        <div className="mb-4">
+          <label className="block mb-2 text-sm font-medium text-gray-700">Enter Keywords:</label>
+          <input
+            type="text"
+            className="w-full p-2 border rounded-md"
+            placeholder="e.g., calm, vibrant, nature"
+            value={keywords}
+            onChange={(e) => setKeywords(e.target.value)}
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2 text-sm font-medium text-gray-700">Upload an Image:</label>
+          <input type="file" className="block w-full" onChange={handleImageUpload} />
+          {uploadedImage && (
+            <img
+              src={uploadedImage}
+              alt="Uploaded Preview"
+              className="mt-4 w-32 h-32 object-cover rounded-md"
+            />
+          )}
+        </div>
+        <div className="mb-4">
+          <label className="block mb-2 text-sm font-medium text-gray-700">Pick a Theme Color:</label>
+          <SketchPicker color={color} onChange={(color) => setColor(color.hex)} />
+        </div>
+      </div>
+
+      {/* Drag and Drop Area */}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="moodboard">
+          {(provided) => (
+            <div
+              className="bg-white rounded-lg shadow-md p-4"
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+            >
+              {items.map((item, index) => (
+                <Draggable key={item.id} draggableId={item.id} index={index}>
+                  {(provided) => (
+                    <div
+                      className="p-4 bg-accent text-white rounded-md mb-2"
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                    >
+                      {item.content}
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+
+      <div className="mt-6 text-center">
+        <button className="px-6 py-3 bg-secondary text-white rounded-lg hover:bg-primary transition">
+          Save Moodboard
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// 5. Add Tailwind styles
+
+// styles/globals.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
